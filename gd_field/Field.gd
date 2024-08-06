@@ -13,8 +13,13 @@ enum FIELD_FILL_METHOD {CUSTOM, REPEAT_ALL}
 
 var points : Array[Vector2i] = []
 
+var fill_method: Callable = func(coord:Vector2i): return points
+
 func _init(field_size: Vector2i):
 	set_size(Vector2(field_size))
+
+func get_dots_of(offset:Vector2i) -> Array[Vector2i]:
+	return self.fill_method.call(offset)
 
 class Builder:
 	
