@@ -13,18 +13,20 @@ enum FIELD_FILL_METHOD {CUSTOM, REPEAT_ALL}
 
 var points : Array[Vector2i] = []
 
-var fill_method: Callable = func(coord:Vector2i): return points
+var fill_method: Callable
 
 func _init(field_size: Vector2i):
 	set_size(Vector2(field_size))
 
 func get_dots_of(offset:Vector2i) -> Array[Vector2i]:
-	return self.fill_method.call(offset)
+	return self.fill_method.call(self, offset)
 
 class Builder:
 	
 	var effective_size := Vector2i.ONE
 	var points : Array[Vector2i] = []
+	var method : FIELD_FILL_METHOD = FIELD_FILL_METHOD.REPEAT_ALL
+	var custom_fill_method: Callable 
 
 	func size(field_size: Vector2i) -> Builder:
 		effective_size = Field.min_size if field_size < Vector2i.ONE else field_size
@@ -35,10 +37,23 @@ class Builder:
 	func set_points(new_points:Array[Vector2i]) -> Builder:
 		points = new_points
 		return self
+		
+	func set_fill_method(fill_method:Callable) -> Builder:
+		method = FIELD_FILL_METHOD.CUSTOM
+		custom_fill_method = fill_method
+		return self	
 
 	func build() -> Field:
 		var field = Field.new(effective_size)
 		field.points = Field.single_center_dot if points.size() < 1 else points
+		if method == FIELD_FILL_METHOD.REPEAT_ALL:
+			field.fill_method = func(it:Field,_coord:Vector2i): return it.points
+			
+		if method == FIELD_FILL_METHOD.CUSTOM:
+			field.fill_method = custom_fill_method
+				
+		if field.fill_method == null:
+			printerr("Field method is missing")	
 		return field
 
 
