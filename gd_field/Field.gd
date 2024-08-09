@@ -4,10 +4,12 @@ extends PlaneMesh
 
 static var it_version = 0
 static var min_size := Vector2i.ONE
+static var resolution_step := Vector2i.ONE
 static var default_resolution = 100
 static var field_resolution := Vector2i(default_resolution,default_resolution)
 static var center_dot  := field_resolution / 2
 static var single_center_dot : Array[Vector2i] = [center_dot]
+
 
 enum FIELD_FILL_METHOD {CUSTOM, REPEAT_ALL}
 
@@ -18,7 +20,7 @@ var fill_method: Callable
 func _init(field_size: Vector2i):
 	set_size(Vector2(field_size))
 
-func get_dots_of(offset:Vector2i) -> Array[Vector2i]:
+func get_dots_of(offset:Vector2i) -> Array[Vector3]:
 	return self.fill_method.call(self, offset)
 
 class Builder:
@@ -47,7 +49,10 @@ class Builder:
 		var field = Field.new(effective_size)
 		field.points = Field.single_center_dot if points.size() < 1 else points
 		if method == FIELD_FILL_METHOD.REPEAT_ALL:
-			field.fill_method = func(it:Field,_coord:Vector2i): return it.points
+			field.fill_method = func(it:Field,_coord:Vector2i) -> Array[Vector3]: 
+					var result: Array[Vector3] = []
+					result.assign(it.points.map(func(point): return Vector3(point.x, 0, point.y)))
+					return result
 			
 		if method == FIELD_FILL_METHOD.CUSTOM:
 			field.fill_method = custom_fill_method
