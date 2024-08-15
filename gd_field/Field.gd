@@ -10,18 +10,53 @@ static var field_resolution := Vector2i(default_resolution,default_resolution)
 static var center_dot  := field_resolution / 2
 static var single_center_dot : Array[Vector2i] = [center_dot]
 
-
 enum FIELD_FILL_METHOD {CUSTOM, REPEAT_ALL}
 
 var points : Array[Vector2i] = []
 
 var fill_method: Callable
 
+var size_integer: Vector2i
+var start_point: Vector2
+
 func _init(field_size: Vector2i):
+	self.size_integer = field_size
+	self.start_point = field_size * -0.5
 	set_size(Vector2(field_size))
 
-func get_dots_of(offset:Vector2i) -> Array[Vector3]:
+func get_dots_of(offset:Vector2i) -> Array[Vector2]:
 	return self.fill_method.call(self, offset)
+	
+func check_field(offset:Vector2i) -> bool:
+	return (offset >= Vector2i.ZERO) && (offset <= size_integer - min_size)
+	
+"""
+Repeats https://github.com/godotengine/godot/blob/33c30b9e63a58b860cb2f36957c5e25cee34a627/scene/resources/3d/primitive_meshes.cpp#L1297-L1303
+"""
+func ofOrientation(dot: Vector2) -> Vector3:
+	match(orientation):
+		PlaneMesh.Orientation.FACE_X: return Vector3(0.0, dot.y, dot.x)
+		PlaneMesh.Orientation.FACE_Y: return Vector3(-dot.x, 0.0, -dot.y)
+		PlaneMesh.Orientation.FACE_Z: return Vector3(-dot.x, dot.y, 0.0)
+		_: printerr("Unexpected value for PlaneMesh.Orientation=", orientation,". Fallback to zero"); return Vector3.ZERO	
+
+func dot(dot: Vector2) -> Vector3:
+	return ofOrientation(dot) + center_offset
+
+"""
+Transforms a grid point to array of filler points.
+"""
+class FillMethods:
+	
+	static func same(it:Field,coord:Vector2i) -> Array[Vector2]: 
+		var result: Array[Vector2] = []
+		if not it.check_field(coord): return result
+		result.assign(it.points.map(func(point): 
+			var fl_x = point.x as float/it.field_resolution.x as float 
+			var fl_y = point.y as float/it.field_resolution.y as float
+			return it.start_point + Vector2(coord) + Vector2(fl_x, fl_y)
+			))
+		return result 
 
 class Builder:
 	
@@ -29,6 +64,7 @@ class Builder:
 	var points : Array[Vector2i] = []
 	var method : FIELD_FILL_METHOD = FIELD_FILL_METHOD.REPEAT_ALL
 	var custom_fill_method: Callable 
+	var isOffsetAligned = false
 
 	func size(field_size: Vector2i) -> Builder:
 		effective_size = Field.min_size if field_size < Vector2i.ONE else field_size
@@ -39,26 +75,31 @@ class Builder:
 	func set_points(new_points:Array[Vector2i]) -> Builder:
 		points = new_points
 		return self
-		
+
 	func set_fill_method(fill_method:Callable) -> Builder:
 		method = FIELD_FILL_METHOD.CUSTOM
 		custom_fill_method = fill_method
 		return self	
+		
+	func align_offset_with_origin() -> Builder:
+		isOffsetAligned = true
+		return self 
 
 	func build() -> Field:
 		var field = Field.new(effective_size)
 		field.points = Field.single_center_dot if points.size() < 1 else points
 		if method == FIELD_FILL_METHOD.REPEAT_ALL:
-			field.fill_method = func(it:Field,_coord:Vector2i) -> Array[Vector3]: 
-					var result: Array[Vector3] = []
-					result.assign(it.points.map(func(point): return Vector3(point.x, 0, point.y)))
-					return result
+			field.fill_method = FillMethods.same
 			
 		if method == FIELD_FILL_METHOD.CUSTOM:
 			field.fill_method = custom_fill_method
 				
 		if field.fill_method == null:
 			printerr("Field method is missing")	
+
+		if isOffsetAligned:
+			printerr("Not implemented (allign offset with origin at Vector2i.ZERO")
+
 		return field
 
 
