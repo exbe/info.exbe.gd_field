@@ -57,6 +57,25 @@ class FillMethods:
 			return it.start_point + Vector2(coord) + Vector2(fl_x, fl_y)
 			))
 		return result 
+		
+	static func slidingWithPointsPerUnit(points_per_unit: int) -> Callable:
+		return 	 func(it:Field,coord:Vector2i) -> Array[Vector2]: 
+			var result: Array[Vector2] = []
+			if not it.check_field(coord): return result
+			var groups_total = it.points.size() / points_per_unit
+			
+			var current_group = coord.x % groups_total + coord.y
+			var effective_group = current_group % groups_total
+			
+			var idx_start = effective_group * points_per_unit
+			var slice =  it.points.slice(idx_start, idx_start + points_per_unit)
+
+			result.assign( slice.map(func(point): 
+				var fl_x = point.x as float/it.field_resolution.x as float 
+				var fl_y = point.y as float/it.field_resolution.y as float
+				return it.start_point + Vector2(coord) + Vector2(fl_x, fl_y)
+				))
+			return result
 
 class Builder:
 	
