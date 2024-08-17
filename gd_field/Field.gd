@@ -59,13 +59,28 @@ class FillMethods:
 		return result 
 		
 	static func slidingWithPointsPerUnit(points_per_unit: int) -> Callable:
+		var current_group_func = func(_it:Field, coord:Vector2i,groups_total:int)->int:
+			return coord.x % groups_total + coord.y
+		return callablePointsPerUnit(points_per_unit, current_group_func)
+
+	static func slidingPriorityX(points_per_unit: int) -> Callable:
+		var current_group_func = func(it:Field, coord:Vector2i,groups_total:int)->int:
+			return coord.x * it.size_integer.y + coord.y
+		return callablePointsPerUnit(points_per_unit, current_group_func)
+
+	static func slidingPriorityY(points_per_unit: int) -> Callable:
+		var current_group_func = func(it:Field, coord:Vector2i,groups_total:int)->int:
+			return coord.y * it.size_integer.x + coord.x
+		return callablePointsPerUnit(points_per_unit, current_group_func)
+
+			
+	static func callablePointsPerUnit(points_per_unit: int, current_group_func: Callable) -> Callable:
 		return 	 func(it:Field,coord:Vector2i) -> Array[Vector2]: 
 			var result: Array[Vector2] = []
 			if not it.check_field(coord): return result
 			var groups_total = it.points.size() / points_per_unit
-			
-			var current_group = coord.x % groups_total + coord.y
-			var effective_group = current_group % groups_total
+
+			var effective_group = current_group_func.call(it,coord,groups_total) % groups_total
 			
 			var idx_start = effective_group * points_per_unit
 			var slice =  it.points.slice(idx_start, idx_start + points_per_unit)
@@ -76,6 +91,7 @@ class FillMethods:
 				return it.start_point + Vector2(coord) + Vector2(fl_x, fl_y)
 				))
 			return result
+		 		
 
 class Builder:
 	
