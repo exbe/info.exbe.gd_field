@@ -108,6 +108,7 @@ class PositionMethods:
 		var yyy = fposmod(point_point.y,1)  * it.field_resolution.y
 		var candidate = Vector2i(xxx,yyy)
 		var dot = it.points.map(func(point):
+					# no need to create Vector2 in godot4.3 to call distance_squared_to
 					var distance: float = Vector2(point).distance_squared_to(candidate)
 					return VectorAndDistance.new(point,distance)
 					).reduce(func(vctr:VectorAndDistance, accc: VectorAndDistance):
