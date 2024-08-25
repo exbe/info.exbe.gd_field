@@ -107,14 +107,22 @@ class PositionMethods:
 		var xxx = fposmod(point_point.x,1)  * it.field_resolution.x
 		var yyy = fposmod(point_point.y,1)  * it.field_resolution.y
 		var candidate = Vector2i(xxx,yyy)
-		var dots = it.points.map(func(point):
-					return candidate.snapped(point)
-					).filter(func(point):
-					return point != Vector2i.ZERO
+		var dot = it.points.map(func(point):
+					var distance: float = Vector2(point).distance_squared_to(candidate)
+					return VectorAndDistance.new(point,distance)
+					).reduce(func(vctr:VectorAndDistance, accc: VectorAndDistance):
+					return vctr if vctr.distance < accc.distance else 	accc
 					)
-		result.assign(dots)
+		result.push_front(dot.vector)
 		return result
 
+
+class VectorAndDistance:
+	var vector: Vector2i
+	var distance: float
+	func _init(vector: Vector2i, distance: float):
+		self.vector = vector
+		self.distance = distance
 
 class Builder:
 	
