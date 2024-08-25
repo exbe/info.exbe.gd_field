@@ -11,10 +11,12 @@ static var center_dot  := field_resolution / 2
 static var single_center_dot : Array[Vector2i] = [center_dot]
 
 enum FIELD_FILL_METHOD {CUSTOM, REPEAT_ALL}
+enum FIELD_POSITIONS_METHOD {CUSTOM, CLOSEST}
 
 var points : Array[Vector2i] = []
 
 var fill_method: Callable
+var position_method: Callable
 
 var size_integer: Vector2i
 var start_point: Vector2
@@ -26,7 +28,11 @@ func _init(field_size: Vector2i):
 
 func get_dots_of(offset:Vector2i) -> Array[Vector2]:
 	return self.fill_method.call(self, offset)
-	
+
+func get_dot_of(offset:Vector2) -> Array[Vector2i]:
+	return self.position_method.call(self, offset)
+
+
 func check_field(offset:Vector2i) -> bool:
 	return (offset >= Vector2i.ZERO) && (offset <= size_integer - min_size)
 	
@@ -91,14 +97,33 @@ class FillMethods:
 				return it.start_point + Vector2(coord) + Vector2(fl_x, fl_y)
 				))
 			return result
-		 		
+
+class PositionMethods:
+	static func closest(it: Field, coord: Vector2) -> Array[Vector2i]:
+		var result: Array[Vector2i] = []
+		var point_point = coord - it.start_point
+		var point33 = Vector2i(point_point)
+		if not it.check_field(point33): return result
+		var xxx = fposmod(point_point.x,1)  * it.field_resolution.x
+		var yyy = fposmod(point_point.y,1)  * it.field_resolution.y
+		var candidate = Vector2i(xxx,yyy)
+		var dots = it.points.map(func(point):
+					return candidate.snapped(point)
+					).filter(func(point):
+					return point != Vector2i.ZERO
+					)
+		result.assign(dots)
+		return result
+
 
 class Builder:
 	
 	var effective_size := Vector2i.ONE
 	var points : Array[Vector2i] = []
 	var method : FIELD_FILL_METHOD = FIELD_FILL_METHOD.REPEAT_ALL
-	var custom_fill_method: Callable 
+	var position_method: FIELD_POSITIONS_METHOD = FIELD_POSITIONS_METHOD.CLOSEST
+	var custom_fill_method: Callable
+	var custom_position_method: Callable
 	var isOffsetAligned = false
 
 	func size(field_size: Vector2i) -> Builder:
@@ -115,7 +140,12 @@ class Builder:
 		method = FIELD_FILL_METHOD.CUSTOM
 		custom_fill_method = fill_method
 		return self	
-		
+
+	func set_position_method(position_method: Callable) -> Builder:
+		self.position_method = FIELD_POSITIONS_METHOD.CUSTOM
+		custom_position_method = position_method
+		return self
+
 	func align_offset_with_origin() -> Builder:
 		isOffsetAligned = true
 		return self 
@@ -128,9 +158,18 @@ class Builder:
 			
 		if method == FIELD_FILL_METHOD.CUSTOM:
 			field.fill_method = custom_fill_method
-				
+
+		if position_method == FIELD_POSITIONS_METHOD.CLOSEST:
+			field.position_method = PositionMethods.closest
+
+		if position_method == FIELD_POSITIONS_METHOD.CUSTOM:
+			field.fill_method = custom_position_method
+
 		if field.fill_method == null:
-			printerr("Field method is missing")	
+			printerr("Field fill method is missing")
+
+		if field.position_method == null:
+			printerr("Field position method is missing")
 
 		if isOffsetAligned:
 			printerr("Not implemented (allign offset with origin at Vector2i.ZERO")
