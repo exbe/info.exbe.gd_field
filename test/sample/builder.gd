@@ -18,6 +18,7 @@ func test_default_builder():
 	assert_eq(field.get_dots_of(Vector2i.ONE),[],"No dots for a another cell")
 	assert_eq(field.center_offset,Vector3.ZERO,"No offset by default")	
 	assert_eq(field.orientation,PlaneMesh.Orientation.FACE_Y,"Plane faces positive Y-axis")	
+	
 
 func test_points():
 	var dots :  Array[Vector2i] = [Vector2i(9,14),Vector2i(80,33)]

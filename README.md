@@ -1,9 +1,6 @@
 New component checklist:
- - [x] replace **name_it** in README
- - [x] two-sentence desription of the component purpose in the current state
  - [ ] update structured data, if applicable
  - [ ] upodate LICENSE, specifically **licence_year** and **auhtors**
- - [x] assign repository `tags` in github, if applicable  
  - [ ] the checklist is removed before initial commit
 
 
@@ -25,9 +22,10 @@ The plane inherits *PlaneMesh* behavior and exposes additional methods to perfor
 
 Builder `Field.builder()` is recommended way to initialize Field for most users.
 
+This project does not have Godot Project (*.tscn or project.godot) as it supposed to be used as a library/script.
+
 ## Usage
 
-This code expects you to know what you are doing...
  
 The class can be used directly, but it is recommended to start with `Field.builder()` as it provides some safenet to build *Field* object:
 ```
@@ -67,6 +65,12 @@ slidingPriorityX or any lamda-generating method:
 
 ## Testing
 
+ - Run new godot project, such that this root folder would be under "res://" path.
+ - Follow plugin setup instructions for [Gut](https://github.com/bitwes/Gut) 
+ - Load test configuration (gut_builder.conf) 
+ - run Test 
+
 `test` has executable samples and tests (see [GUT](https://github.com/bitwes/Gut) for details)
+
 
 

@@ -1,5 +1,4 @@
 class_name Field
-
 extends PlaneMesh
 
 static var it_version = 0
@@ -49,14 +48,14 @@ Transforms a grid point to array of filler points.
 class FillMethods:
 	
 	static func same(it:Field,coord:Vector2i) -> Array[Vector2]: 
-		var result: Array[Vector2] = []
-		if not it.check_field(coord): return result
-		result.assign(it.points.map(func(point): 
+		if not it.check_field(coord): return emptyVector2()
+		var result = it.points.map(func(point): 
 			var fl_x = point.x as float/it.field_resolution.x as float 
 			var fl_y = point.y as float/it.field_resolution.y as float
 			return it.start_point + Vector2(coord) + Vector2(fl_x, fl_y)
-			))
-		return result 
+			)
+ 
+		return toVector2(result)
 		
 	static func slidingWithPointsPerUnit(points_per_unit: int) -> Callable:
 		var current_group_func = func(_it:Field, coord:Vector2i,groups_total:int)->int:
@@ -76,21 +75,25 @@ class FillMethods:
 			
 	static func callablePointsPerUnit(points_per_unit: int, current_group_func: Callable) -> Callable:
 		return 	 func(it:Field,coord:Vector2i) -> Array[Vector2]: 
-			var result: Array[Vector2] = []
-			if not it.check_field(coord): return result
+			if not it.check_field(coord): return emptyVector2()
 			var groups_total = it.points.size() / points_per_unit
 
 			var effective_group = current_group_func.call(it,coord,groups_total) % groups_total
 			
 			var idx_start = effective_group * points_per_unit
 			var slice =  it.points.slice(idx_start, idx_start + points_per_unit)
-
-			result.assign( slice.map(func(point): 
+			
+			var result = slice.map(func(point): 
 				var fl_x = point.x as float/it.field_resolution.x as float 
 				var fl_y = point.y as float/it.field_resolution.y as float
 				return it.start_point + Vector2(coord) + Vector2(fl_x, fl_y)
-				))
-			return result
+				)
+			return toVector2(result)
+				
+	static func emptyVector2() -> Array[Vector2]: return []
+	
+	static func toVector2(input: Array) -> Array[Vector2]:
+		return Array(input, TYPE_VECTOR2, "", null)
 		 		
 
 class Builder:

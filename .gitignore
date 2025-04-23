@@ -1,0 +1,17 @@
+# Godot 4+ specific ignores
+.godot/
+/android/
+
+# Godot Default projefct
+icon.*
+project.dogot
+
+# Godot Addons
+addons
+
+# Godot Scene
+
+*.tscn
+
+# Godot UID
+*.gd.uid
